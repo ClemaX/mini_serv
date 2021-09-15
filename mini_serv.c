@@ -154,7 +154,7 @@ static int	broadcast_msg(client *clients, int n, int sender_id,
 	int			ret = 0;
 
 	if (sender_id < 0)
-		prefix_len = sprintf(prefix, "server: client %d ", -sender_id);
+		prefix_len = sprintf(prefix, "server: client %d ", -(sender_id + 1));
 	else
 		prefix_len = sprintf(prefix, "client %d: ", sender_id);
 
@@ -195,8 +195,7 @@ static int  listener_accept(client *clients, int listen_fd, int *highest_fd)
 		{
 			if (fd > *highest_fd)
 				*highest_fd = fd;
-			broadcast_msg(clients, *highest_fd - listen_fd,
-				-(fd - listen_fd - 1), "just arrived\n", 13);
+			broadcast_msg(clients, *highest_fd - listen_fd, -(fd - listen_fd), "just arrived\n", 13);
 		}
 	}
 
