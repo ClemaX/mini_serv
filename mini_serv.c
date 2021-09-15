@@ -56,8 +56,6 @@ static int	buff_resize(buffer *buff, size_t new_size)
 
 	if (new_size != buff->size)
 	{
-		printf("Reallocating len: %zu, size %zu to %zu", buff->len,
-			buff->size, new_size);
 		if (new_size < buff->size)
 			buff->len = new_size;
 		new_data = realloc(buff->data, new_size);
@@ -135,7 +133,10 @@ static int	cli_io(client *client, int fd, bool readable, bool writable)
 		{
 			msg_end = strstr(client->r.data + client->r.len - ret, "\n");
 			if (msg_end != NULL)
-				ret = msg_end - client->r.data + 1; // returning 1 here is ambiguous
+			{
+				ret = msg_end - client->r.data + 2;
+				printf("Full message[%d]: '%.*s'", ret, ret, client->r.data);
+			}
 		}
 	}
 
@@ -158,7 +159,6 @@ static int	broadcast_msg(client *clients, int n, int sender_id,
 		prefix_len = sprintf(prefix, "client %d: ", sender_id);
 
 	len += prefix_len;
-	printf("prefix: %s, len: %zd, total: %zu\n", prefix, prefix_len, len);
 
 	for (int id = 0; ret == 0 && id < n; id++)
 	{
@@ -237,7 +237,6 @@ static int	listener_select(client *clients, int listen_fd, int highest_fd,
 	printf("Waiting for connections...\n");
 	status = select(highest_fd + 1, rfds, wfds, NULL, NULL);
 
-	printf("status: %d\n", status);
 	if (status == -1 && errno == EINTR)
 		status = 0;
 
@@ -289,6 +288,7 @@ fcntl(fd, F_SETFL, O_NONBLOCK);
 				}
 				else if (s > 1)
 				{
+					s--;
 					if (broadcast_msg(c, hfd - fd, id, c[id].r.data, s) == 0)
 					{
 						c[id].r.len -= s;
